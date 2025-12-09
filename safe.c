@@ -1,42 +1,31 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>  // Thêm cho SIZE_MAX
 
-void safe_copy(const char *input) {
-    char buffer[64];
-    size_t len = strlen(input);
+// Sử dụng size_t thay vì int
+int safe_memory(size_t size) {
+    // Giới hạn hợp lý, tránh cấp phát quá lớn
+    const size_t MAX_ALLOC = 1024;
     
-    // Kiểm tra kích thước trước khi sao chép
-    if (len < sizeof(buffer)) {
-        strncpy(buffer, input, sizeof(buffer) - 1);
-        buffer[sizeof(buffer) - 1] = '\0';  // Đảm bảo null-terminated
-        printf("%s\n", buffer);  // Format string an toàn
-    } else {
-        printf("Input too long\n");
-    }
-}
-
-void safe_memory(int size) {
-    // Kiểm tra giá trị hợp lệ
-    if (size <= 0 || size > 1024) {
-        return;
+    if (size == 0 || size > MAX_ALLOC) {
+        fprintf(stderr, "Invalid size: %zu\n", size);
+        return -1;  // Trả về mã lỗi
     }
     
-    char *ptr = (char *)malloc(size);
+    // Không cần cast trong C (bắt buộc trong C++)
+    char *ptr = malloc(size);
     
-    // Kiểm tra NULL trước khi sử dụng
-    if (ptr != NULL) {
-        memset(ptr, 0, size);
-        printf("Allocated %d bytes\n", size);
-        free(ptr);       // Giải phóng đúng cách
-        ptr = NULL;      // Đặt NULL sau khi free
+    if (ptr == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return -1;  // Xử lý lỗi rõ ràng
     }
-}
-
-int main(int argc, char *argv[]) {
-    if (argc > 1) {
-        safe_copy(argv[1]);
-    }
-    safe_memory(128);
-    return 0;
+    
+    memset(ptr, 0, size);
+    printf("Allocated %zu bytes\n", size);
+    
+    free(ptr);
+    // ptr = NULL; // Không cần vì là biến cục bộ
+    
+    return 0;  // Thành công
 }
